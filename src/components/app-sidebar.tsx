@@ -104,7 +104,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a href="/">
+                <a href="https://github.com/shenxiang11/note" target="_blank">
                   <span className="size-6 flex justify-center items-center">
                     <Github />
                   </span>

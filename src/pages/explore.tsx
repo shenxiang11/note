@@ -2,6 +2,7 @@ import {useLazyQuery} from "@apollo/client";
 import {gql} from "@/__generated__";
 import {NoteList} from "@/components/note-list.tsx";
 import {LoadMore} from "@/components/load-more.tsx";
+import { useDocumentTitle } from "@uidotdev/usehooks";
 
 const GET_PUBLISHED_NOTES = gql(/* GraphQL */`
     query publishedNotes($pageSize: Int!, $cursor: Int) {
@@ -29,6 +30,8 @@ const GET_PUBLISHED_NOTES = gql(/* GraphQL */`
 `);
 
 export function Explore() {
+  useDocumentTitle('小笔记');
+
   const [getPublishedNotes, { data, fetchMore: fetchMorePublishedNotes }] = useLazyQuery(GET_PUBLISHED_NOTES, {
     variables: {
       pageSize: 12,

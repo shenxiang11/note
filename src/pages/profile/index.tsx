@@ -7,7 +7,7 @@ import {Notes} from "@/pages/profile/notes.tsx";
 import {Likes} from "@/pages/profile/likes.tsx";
 import {Collects} from "@/pages/profile/collects.tsx";
 import { Button } from "@/components/ui/button";
-import {useHover} from "@uidotdev/usehooks";
+import {useDocumentTitle, useHover} from "@uidotdev/usehooks";
 import {FOLLOW_USER, UNFOLLOW_USER} from "@/graphql";
 
 const PROFILE = gql(/* GraphQL */`
@@ -41,6 +41,8 @@ export function Profile() {
   });
 
   const profile = data?.profile;
+
+  useDocumentTitle(`${profile?.fullname}的主页`);
 
   const [followingRef, followingHovering] = useHover();
 

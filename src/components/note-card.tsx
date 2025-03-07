@@ -121,7 +121,7 @@ export function NoteCard({ note }: { note: DeepPartial<Note>}) {
         </Card>
       </DialogTrigger>
       {
-        note.id && <NoteDetail id={note.id} />
+        detailDialogShow && note.id && <NoteDetail id={note.id} />
       }
     </Dialog>
   );

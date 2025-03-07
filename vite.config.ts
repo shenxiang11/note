@@ -14,11 +14,13 @@ export default defineConfig({
   server: {
     proxy: {
       "/graphql": {
-        target: "http://localhost:8000",
+        target: "https://note.sneakerhunt.shop",
+        // target: "http://localhost:8000",
         changeOrigin: true,
       },
       "/resource": {
-        target: "http://localhost:8000",
+        target: "https://note.sneakerhunt.shop",
+        // target: "http://localhost:8000",
         changeOrigin: true,
       },
     },

@@ -5,8 +5,12 @@ import { Explore } from './pages/explore.tsx';
 import {ApolloProvider} from "@apollo/client";
 import client from "@/apollo.ts";
 import {Profile} from "@/pages/profile";
+import {NoteDetail} from "@/components/note-detail.tsx";
+import {noteDetailStore} from "@/store/use-note-detail.ts";
 
 function App() {
+  const { id } = noteDetailStore();
+
   return (
     <ApolloProvider client={client}>
       <BrowserRouter>
@@ -17,6 +21,7 @@ function App() {
             <Route path="profile/:id" element={<Profile />} />
           </Route>
         </Routes>
+        <NoteDetail id={id} />
       </BrowserRouter>
     </ApolloProvider>
   )

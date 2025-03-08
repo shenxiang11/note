@@ -1,4 +1,4 @@
-import {DialogContent, DialogDescription, DialogTitle} from "@/components/ui/dialog.tsx";
+import {Dialog, DialogContent, DialogDescription, DialogTitle} from "@/components/ui/dialog.tsx";
 import {gql} from "@/__generated__";
 import {useLazyQuery, useMutation, useQuery} from "@apollo/client";
 import {
@@ -31,6 +31,9 @@ import {
 } from "@/graphql";
 import {LoadMore} from "@/components/load-more.tsx";
 import {NoteComment} from "@/components/note-comment.tsx";
+import {useEffect, useRef} from "react";
+import {useSearchParams} from "react-router";
+import {noteDetailStore} from "@/store/use-note-detail.ts";
 
 const NOTE_DETAIL = gql(/* GraphQL */`
     query Note($id: Int!) {
@@ -292,215 +295,259 @@ export function NoteDetail({ id }: { id: number }) {
     clearCommentStore();
   }
 
+  const [params, setParams] = useSearchParams();
+
+  const titleRef = useRef(document.title);
+
+  const { id: detailId, open, close } = noteDetailStore();
+
+  useEffect(() => {
+    const queryIdStr = params.get("note_id");
+    const queryId = queryIdStr ? parseInt(queryIdStr, 10) : null;
+    console.log("query id: ", queryId);
+    if (queryId) {
+      open(queryId);
+    } else {
+      close();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (detailId && note) {
+      titleRef.current = document.title;
+      document.title = note?.title ?? "";
+      setParams((prev) => {
+        prev.set("note_id", note?.id?.toString() ?? "");
+        return prev;
+      });
+    }
+  }, [detailId, note]);
+
   return (
-    <DialogContent className="w-6xl p-0 overflow-hidden border-0" hideClose>
-      <DialogTitle hidden />
-      <DialogDescription hidden />
-      <div>
-        <div className="flex flex-cols-2">
-          <div className="relative bg-black w-0 grow-7">
-            {
-              note?.type === NoteType.Video ? (
-                <AspectRatio ratio={11/16}>
-                  <VideoPlayer
-                    src={note.video}
-                  />
-                </AspectRatio>
-              ) : (
-                <Carousel>
-                  <CarouselContent>
-                    {
-                      note?.images?.map((image) => (
-                        <CarouselItem key={image}>
-                          <AspectRatio ratio={11/16}>
-                            <img className="h-full w-full object-contain" src={image} alt=""/>
-                          </AspectRatio>
-                        </CarouselItem>
-                      ))
-                    }
-                  </CarouselContent>
-                  <CarouselPrevious/>
-                  <CarouselNext/>
-                  <CarouselDots/>
-                </Carousel>
-              )
-            }
-          </div>
-          <div className="flex flex-col w-0 grow-5">
-            <div className="flex justify-between items-center px-8 py-4 shrink-0 border-b">
-              <a href={`/profile/${note?.userId}`} target="_blank" className="flex items-center gap-2">
-                <Avatar className="size-10">
-                  <AvatarImage src={note?.user?.avatar} />
-                  <AvatarFallback>{note?.user?.fullname}</AvatarFallback>
-                </Avatar>
-                <h4 className="text-base text-[#333]/80">{note?.user?.fullname}</h4>
-              </a>
-              <div>
+    <Dialog
+      open={!!detailId}
+      onOpenChange={(show) => {
+        if (!show) {
+          close();
+          document.title = titleRef.current;
+          setParams((prev) => {
+            prev.delete("note_id");
+            return prev;
+          });
+        } else {
+          open(id!);
+        }
+      }}
+    >
+      <DialogContent className="w-6xl p-0 overflow-hidden border-0" hideClose>
+        <DialogTitle hidden />
+        <DialogDescription hidden />
+        <div>
+          <div className="flex flex-cols-2">
+            <div className="relative bg-black w-0 grow-7">
+              {
+                note?.type === NoteType.Video ? (
+                  <AspectRatio ratio={11/16}>
+                    <VideoPlayer
+                      src={note.video}
+                    />
+                  </AspectRatio>
+                ) : (
+                  <Carousel>
+                    <CarouselContent>
+                      {
+                        note?.images?.map((image) => (
+                          <CarouselItem key={image}>
+                            <AspectRatio ratio={11/16}>
+                              <img className="h-full w-full object-contain" src={image} alt=""/>
+                            </AspectRatio>
+                          </CarouselItem>
+                        ))
+                      }
+                    </CarouselContent>
+                    <CarouselPrevious/>
+                    <CarouselNext/>
+                    <CarouselDots/>
+                  </Carousel>
+                )
+              }
+            </div>
+            <div className="flex flex-col w-0 grow-5">
+              <div className="flex justify-between items-center px-8 py-4 shrink-0 border-b">
+                <a href={`/profile/${note?.userId}`} target="_blank" className="flex items-center gap-2">
+                  <Avatar className="size-10">
+                    <AvatarImage src={note?.user?.avatar} />
+                    <AvatarFallback>{note?.user?.fullname}</AvatarFallback>
+                  </Avatar>
+                  <h4 className="text-base text-[#333]/80">{note?.user?.fullname}</h4>
+                </a>
+                <div>
+                  {
+                    note?.user?.isFollowed ? (
+                      <Button
+                        ref={followingRef}
+                        onClick={() => unfollowUser()} variant="outline">
+                        {followingHovering ? "取消关注" : "正在关注"}
+                      </Button>
+                    ) : (
+                      <Button onClick={() => followUser()}>关注</Button>
+                    )
+                  }
+                </div>
+              </div>
+              <div className="h-0 grow">
+                <ScrollArea className="w-full h-full text-primary">
+                  <div className="px-8 pt-4 flex flex-col gap-2">
+                    <h4 className="text-lg font-semibold">{note?.title}</h4>
+                    <p className="text-base whitespace-pre-line">{note?.content}</p>
+                    <p className="text-sm text-slate-500">{formatDateTime(note?.createdAt ?? null)}</p>
+                  </div>
+                  <Separator className="my-4" />
+                  <div className="px-8 space-y-5">
+                    <p className="text-sm text-slate-500">共&nbsp;{note?.commentsCount}&nbsp;条评论</p>
+                    <LoadMore fetchMore={loadMore}>
+                      {
+                        comments?.map(comment => (
+                          <NoteComment key={comment.id} noteId={id} id={comment.id} />
+                        ))
+                      }
+                    </LoadMore>
+                  </div>
+                </ScrollArea>
+              </div>
+              <div className="w-full shrink-0 p-2 flex gap-2 border-t">
                 {
-                  note?.user?.isFollowed ? (
-                    <Button
-                      ref={followingRef}
-                      onClick={() => unfollowUser()} variant="outline">
-                      {followingHovering ? "取消关注" : "正在关注"}
-                    </Button>
+                  commentMode ? (
+                    <div className="w-full">
+                      {
+                        replyComment && (
+                          <div className="px-8 pt-2 space-y-2">
+                            <p className="text-primary/60 text-sm">回复&nbsp;{replyComment?.user?.fullname}</p>
+                            <p className="text-primary/80 text-sm">{replyComment?.content}</p>
+                          </div>
+                        )
+                      }
+                      <div className="p-4">
+                        <Textarea
+                          className="resize-none w-full max-h-40"
+                          autoFocus
+                          value={commentContent}
+                          onChange={(e) => setCommentContent(e.target.value)}
+                        />
+                      </div>
+                      <div className="w-full flex justify-end gap-2">
+                        <Button
+                          disabled={commentCreating || replyCreating}
+                          onClick={() => {
+                            if (replyComment) {
+                              createReply({
+                                variables: {
+                                  noteId: id,
+                                  content: commentContent,
+                                  rootId: rootId || replyComment.id!,
+                                  commentId: parentId || replyComment.id!,
+                                },
+                              })
+                                .finally(() => {
+                                  closeCommentInput();
+                                })
+                            } else {
+                              createNoteComment({
+                                variables: {
+                                  noteId: id,
+                                  content: commentContent,
+                                },
+                              })
+                                .finally(() => {
+                                  closeCommentInput();
+                                });
+                            }
+                        }}>
+                          {
+                            commentCreating && (
+                              <Loader2 className="animate-spin" />
+                            )
+                          }
+                          发送
+                        </Button>
+                        <Button variant="outline" onClick={() => closeCommentInput()}>取消</Button>
+                      </div>
+                    </div>
                   ) : (
-                    <Button onClick={() => followUser()}>关注</Button>
+                    <>
+                      {
+                        authProfile ? (
+                          <div className="flex gap-2 p-2 rounded-full bg-slate-200 grow dark:bg-slate-800" onClick={() => {
+                            setCommentMode(true)
+                          }}>
+                            <Avatar className="size-6">
+                              <AvatarImage src={authProfile.avatar} />
+                              <AvatarFallback>{authProfile.fullname}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-slate-600 whitespace-nowrap text-ellipsis">说点什么...</span>
+                            <div className="w-2" />
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 p-2 rounded-full bg-slate-200 grow dark:bg-slate-800" onClick={() => showLoginDialog()}>
+                            <div className="size-6">
+                              <CircleUserRound />
+                            </div>
+                            <span className="text-sm text-slate-600 whitespace-nowrap text-ellipsis">登录后评论</span>
+                            <div className="w-2" />
+                          </div>
+                        )
+                      }
+                      <div className="grow" />
+                      <Button disabled={likeNoteLoading || cancelLikeNoteLoading} variant="ghost" onClick={() => {
+                        if (note?.liked) {
+                          cancelLikeNote();
+                        } else {
+                          likeNote();
+                        }
+                      }}>
+                        {
+                          note?.liked ? (
+                            <Heart fill="red" stroke="red" />
+                          ) : (
+                            <Heart />
+                          )
+                        }
+                        <span className="text-slate-600">{note?.likedCount}</span>
+                      </Button>
+                      <Button disabled={collectNoteLoading || cancelCollectNoteLoading} variant="ghost" onClick={() => {
+                        if (note?.collected) {
+                          cancelCollectNote();
+                        } else {
+                          collectNote();
+                        }
+                      }}>
+                        {
+                          note?.collected ? (
+                            <Star stroke="orange" fill="orange" />
+                          ) : (
+                            <Star />
+                          )
+                        }
+                        <span className="text-slate-600">{note?.collectedCount}</span>
+                      </Button>
+                      <Button variant="ghost" onClick={() => {
+                        if (authProfile) {
+                          setCommentMode(true)
+                        } else {
+                          showLoginDialog();
+                        }
+                      }}>
+                        <MessageCircle />
+                        <span className="text-slate-600">{note?.commentsCount}</span>
+                      </Button>
+                    </>
                   )
                 }
               </div>
             </div>
-            <div className="h-0 grow">
-              <ScrollArea className="w-full h-full text-primary">
-                <div className="px-8 pt-4 flex flex-col gap-2">
-                  <h4 className="text-lg font-semibold">{note?.title}</h4>
-                  <p className="text-base whitespace-pre-line">{note?.content}</p>
-                  <p className="text-sm text-slate-500">{formatDateTime(note?.createdAt ?? null)}</p>
-                </div>
-                <Separator className="my-4" />
-                <div className="px-8 space-y-5">
-                  <p className="text-sm text-slate-500">共&nbsp;{note?.commentsCount}&nbsp;条评论</p>
-                  <LoadMore fetchMore={loadMore}>
-                    {
-                      comments?.map(comment => (
-                        <NoteComment key={comment.id} noteId={id} id={comment.id} />
-                      ))
-                    }
-                  </LoadMore>
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="w-full shrink-0 p-2 flex gap-2 border-t">
-              {
-                commentMode ? (
-                  <div className="w-full">
-                    {
-                      replyComment && (
-                        <div className="px-8 pt-2 space-y-2">
-                          <p className="text-primary/60 text-sm">回复&nbsp;{replyComment?.user?.fullname}</p>
-                          <p className="text-primary/80 text-sm">{replyComment?.content}</p>
-                        </div>
-                      )
-                    }
-                    <div className="p-4">
-                      <Textarea
-                        className="resize-none w-full max-h-40"
-                        autoFocus
-                        value={commentContent}
-                        onChange={(e) => setCommentContent(e.target.value)}
-                      />
-                    </div>
-                    <div className="w-full flex justify-end gap-2">
-                      <Button
-                        disabled={commentCreating || replyCreating}
-                        onClick={() => {
-                          if (replyComment) {
-                            createReply({
-                              variables: {
-                                noteId: id,
-                                content: commentContent,
-                                rootId: rootId || replyComment.id!,
-                                commentId: parentId || replyComment.id!,
-                              },
-                            })
-                              .finally(() => {
-                                closeCommentInput();
-                              })
-                          } else {
-                            createNoteComment({
-                              variables: {
-                                noteId: id,
-                                content: commentContent,
-                              },
-                            })
-                              .finally(() => {
-                                closeCommentInput();
-                              });
-                          }
-                      }}>
-                        {
-                          commentCreating && (
-                            <Loader2 className="animate-spin" />
-                          )
-                        }
-                        发送
-                      </Button>
-                      <Button variant="outline" onClick={() => closeCommentInput()}>取消</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {
-                      authProfile ? (
-                        <div className="flex gap-2 p-2 rounded-full bg-slate-200 grow dark:bg-slate-800" onClick={() => {
-                          setCommentMode(true)
-                        }}>
-                          <Avatar className="size-6">
-                            <AvatarImage src={authProfile.avatar} />
-                            <AvatarFallback>{authProfile.fullname}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-slate-600 whitespace-nowrap text-ellipsis">说点什么...</span>
-                          <div className="w-2" />
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 p-2 rounded-full bg-slate-200 grow dark:bg-slate-800" onClick={() => showLoginDialog()}>
-                          <div className="size-6">
-                            <CircleUserRound />
-                          </div>
-                          <span className="text-sm text-slate-600 whitespace-nowrap text-ellipsis">登录后评论</span>
-                          <div className="w-2" />
-                        </div>
-                      )
-                    }
-                    <div className="grow" />
-                    <Button disabled={likeNoteLoading || cancelLikeNoteLoading} variant="ghost" onClick={() => {
-                      if (note?.liked) {
-                        cancelLikeNote();
-                      } else {
-                        likeNote();
-                      }
-                    }}>
-                      {
-                        note?.liked ? (
-                          <Heart fill="red" stroke="red" />
-                        ) : (
-                          <Heart />
-                        )
-                      }
-                      <span className="text-slate-600">{note?.likedCount}</span>
-                    </Button>
-                    <Button disabled={collectNoteLoading || cancelCollectNoteLoading} variant="ghost" onClick={() => {
-                      if (note?.collected) {
-                        cancelCollectNote();
-                      } else {
-                        collectNote();
-                      }
-                    }}>
-                      {
-                        note?.collected ? (
-                          <Star stroke="orange" fill="orange" />
-                        ) : (
-                          <Star />
-                        )
-                      }
-                      <span className="text-slate-600">{note?.collectedCount}</span>
-                    </Button>
-                    <Button variant="ghost" onClick={() => {
-                      if (authProfile) {
-                        setCommentMode(true)
-                      } else {
-                        showLoginDialog();
-                      }
-                    }}>
-                      <MessageCircle />
-                      <span className="text-slate-600">{note?.commentsCount}</span>
-                    </Button>
-                  </>
-                )
-              }
-            </div>
           </div>
         </div>
-      </div>
-    </DialogContent>
+      </DialogContent>
+    </Dialog>
   );
 }

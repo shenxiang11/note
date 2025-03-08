@@ -21,7 +21,7 @@ function App() {
             <Route path="profile/:id" element={<Profile />} />
           </Route>
         </Routes>
-        <NoteDetail id={id} />
+        <NoteDetail id={id!} />
       </BrowserRouter>
     </ApolloProvider>
   )

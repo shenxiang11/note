@@ -77,46 +77,44 @@ export function LoginDialog() {
       <div className="grid grid-cols-8 gap-4">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn"/>
-              <AvatarFallback>CN</AvatarFallback>
+            <Avatar onClick={() => {
+              setEmail("zero_huzhiwei@xhs.com");
+              setPassword("123456");
+            }}>
+              <AvatarImage src="https://mollybox.oss-cn-shanghai.aliyuncs.com/mixedFile/1741357437906-1040g2jo316md2qklje605plhqd02uba8dul518o.webp" alt="@shadcn"/>
+              <AvatarFallback>胡致炜</AvatarFallback>
             </Avatar>
           </TooltipTrigger>
           <TooltipContent>
-            <p>美妆博主</p>
+            <p>胡致炜</p>
           </TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn"/>
-              <AvatarFallback>CN</AvatarFallback>
+            <Avatar onClick={() => {
+              setEmail("newstarsca@xhs.com");
+              setPassword("123456");
+            }}>
+              <AvatarImage src="https://mollybox.oss-cn-shanghai.aliyuncs.com/mixedFile/1741258633581-656fca8eeaa963f881794291.webp" alt="@shadcn"/>
+              <AvatarFallback>NewStars🆕💫</AvatarFallback>
             </Avatar>
           </TooltipTrigger>
           <TooltipContent>
-            <p>美妆博主</p>
+            <p>NewStars🆕💫</p>
           </TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn"/>
-              <AvatarFallback>CN</AvatarFallback>
+            <Avatar onClick={() => {
+              setEmail("in247224955@xhs.com");
+              setPassword("123456");
+            }}>
+              <AvatarImage src="https://mollybox.oss-cn-shanghai.aliyuncs.com/mixedFile/1741228729560-668a95b21e655fdaf04c66f9.webp" alt="@shadcn"/>
+              <AvatarFallback>依依学金融</AvatarFallback>
             </Avatar>
           </TooltipTrigger>
           <TooltipContent>
-            <p>美妆博主</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn"/>
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>美妆博主</p>
+            <p>依依学金融</p>
           </TooltipContent>
         </Tooltip>
       </div>
